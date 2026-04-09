@@ -1,0 +1,14 @@
+# Blueprint for https://render.com — deploy the API from this repo.
+# Create a separate Static Site for frontend (root: frontend, build: npm run build, publish: dist).
+services:
+  - type: web
+    name: neuroflow-api
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    healthCheckPath: /health
+    envVars:
+      - key: CORS_ORIGINS
+        sync: false
+      - key: NEUROFLOW_TRAIN_ON_STARTUP
+        value: "0"

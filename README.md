@@ -214,6 +214,69 @@ npm run build
 
 ---
 
+## 🌐 Deployment
+
+NeuroFlow is two pieces: **FastAPI** (backend) and **Vite static** (frontend). Deploy the API first, then point the UI at it.
+
+### 1. Backend (Docker)
+
+From the repo root:
+
+```bash
+docker build -t neuroflow-api -f backend/Dockerfile backend
+docker run -p 8000:8000 \
+  -e CORS_ORIGINS="https://your-frontend.example" \
+  neuroflow-api
+```
+
+- **`CORS_ORIGINS`**: comma-separated browser origins allowed to call the API (your deployed frontend URL, no trailing slash). Example: `https://neuroflow.vercel.app`.
+- **Trained model**: `*.joblib` is gitignored. Either mount a volume with `models/neural_green_time.joblib` (and optional metrics JSON), or set **`NEUROFLOW_TRAIN_ON_STARTUP=1`** and provide a UCI-format CSV under **`/app/data`** (e.g. bind-mount `backend/data`).
+
+Health check: `GET /health`.
+
+#### Render
+
+- **Blueprint**: `render.yaml` defines a **Web Service** using `backend/Dockerfile` with context `backend`.
+- After deploy, set **`CORS_ORIGINS`** in the Render dashboard to your frontend URL.
+- Add a **Static Site** (root directory `frontend`, build `npm run build`, publish `dist`).
+
+#### Railway / Fly.io
+
+- Create a service from the repo, set **root directory** to `backend`, use the **Dockerfile** there.
+- Set the same env vars as above.
+
+### 2. Frontend (Vercel or Netlify)
+
+- **Root directory**: `frontend`
+- **Build command**: `npm run build`
+- **Output**: `dist`
+- **Environment variable**: `VITE_API_URL` = your public API base URL (e.g. `https://neuroflow-api.onrender.com` — no trailing slash).
+
+`frontend/vercel.json` and `frontend/netlify.toml` include SPA fallbacks so client-side routes work.
+
+### GitHub Pages (frontend only)
+
+GitHub Pages serves **static files only**; the FastAPI backend must still run on **Render, Railway, Fly.io**, etc.
+
+1. **Repository → Settings → Pages** → **Build and deployment** → Source: **GitHub Actions**.
+2. **Repository → Settings → Secrets and variables → Actions** → add **`VITE_API_URL`** with your public API base URL (HTTPS, no trailing slash), same as in local `.env`.
+3. Push to **`main`**. The workflow [`.github/workflows/pages.yml`](.github/workflows/pages.yml) builds `frontend/` with `BASE_PATH=/<repository-name>/`, copies `index.html` to **`404.html`** (so React Router deep links work), and deploys `dist/`.
+4. On your API host, set **`CORS_ORIGINS`** to include **`https://<your-username>.github.io`** (the browser’s `Origin` for project pages is the `github.io` host **without** the repo path).
+
+**Project site** URL shape: `https://<user>.github.io/<RepoName>/` — `BASE_PATH` is derived from the repo name automatically.
+
+**User site** (`<user>.github.io` with the repo named `<user>.github.io`): change the workflow env to `BASE_PATH: /` so assets load from the domain root.
+
+---
+
+### Order of operations
+
+1. Deploy API → copy HTTPS origin.
+2. Set **`CORS_ORIGINS`** on the API to the frontend origin.
+3. Deploy frontend with **`VITE_API_URL`** set to the API URL.
+
+---
+
 ## 🗺️ Roadmap
 
 - ✅ **Phase 1–2**: Figma UI, routing, Vite + Tailwind
