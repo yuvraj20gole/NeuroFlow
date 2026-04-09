@@ -44,9 +44,9 @@ The backend returns:
 
 ```mermaid
 flowchart LR
-  U[Operator / User] -->|Browser| FE[Vite + React Frontend<br/>localhost:5173/5174]
+  U[Operator / User] -->|Browser| FE[Vite + React Frontend\nlocalhost:5173/5174]
 
-  FE -->|HTTP| API[FastAPI Backend<br/>localhost:8000]
+  FE -->|HTTP| API[FastAPI Backend\nlocalhost:8000]
 
   subgraph Backend[Backend / Decision Layer]
     API --> SIM[/POST /simulate/]
@@ -55,9 +55,9 @@ flowchart LR
     API --> ANA[/GET /analytics/]
     API --> MET[/GET /model/metrics/]
 
-    SIM --> DEC[decision_engine.py<br/>Hybrid controller]
-    DEC --> FZ[fuzzy_engine.py<br/>Fuzzy inference + rules]
-    DEC --> NN[neural_model.py<br/>MLPRegressor (joblib)]
+    SIM --> DEC[decision_engine.py\nHybrid controller]
+    DEC --> FZ[fuzzy_engine.py\nFuzzy inference + rules]
+    DEC --> NN[neural_model.py\nMLPRegressor + joblib]
 
     NN --- MODEL[(models/neural_green_time.joblib)]
     NN --- METRICS[(models/neural_green_time.metrics.json)]
@@ -74,7 +74,7 @@ sequenceDiagram
   participant API as FastAPI
   participant DEC as decision_engine
   participant FZ as fuzzy_engine
-  participant NN as neural_model (MLP)
+  participant NN as neural_model (MLPRegressor)
 
   FE->>API: POST /simulate {densities, waiting_time, emergency}
   API->>DEC: decide(densities, waiting_time, emergency)
